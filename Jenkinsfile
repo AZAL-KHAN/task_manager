@@ -57,7 +57,8 @@ pipeline {
     stage('Deploy to VM via Ansible') {
       steps {
         dir("${ANSIBLE_DIR}") {
-          sh "ansible-playbook -i inventory.ini deploy_flask.yml"
+          // sh "ansible-playbook -i inventory.ini deploy_flask.yml"
+          sh "ansible-playbook -i inventory_aws.ini deploy_flask.yml"
         }
       }
     }
