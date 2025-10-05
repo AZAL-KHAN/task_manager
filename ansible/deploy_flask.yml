@@ -1,0 +1,65 @@
+---
+- name: Deploy Task Manager Flask App to VM
+  hosts: webserver
+  become: true
+  vars:
+    app_name: task-manager
+    image_name: task-manager:latest
+    container_name: task-manager-container
+    app_dir: /opt/task_manager
+
+  tasks:
+    - name: Install Docker if not present
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure application directory exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+
+    - name: Copy application files to VM (excluding some directories)
+      synchronize:
+        src: "{{ playbook_dir }}/../"
+        dest: "{{ app_dir }}/"
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=__pycache__"
+          - "--exclude=k8s"
+          - "--exclude=ansible"
+
+    - name: Build Docker image from app directory
+      command: docker build -t {{ image_name }} {{ app_dir }}
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Stop existing container if running
+      docker_container:
+        name: "{{ container_name }}"
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove existing container if present
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Run new Docker container
+      docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "5000:5000"
+
+    - name: Verify container is running
+      shell: docker ps --filter "name={{ container_name }}" --format "{{'{{.Names}}'}}"
+      register: container_status
+
+    - name: Show container status
+      debug:
+        msg: "Container running: {{ container_status.stdout }}"
