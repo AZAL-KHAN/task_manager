@@ -49,28 +49,41 @@ pipeline {
 
     stage('Deploy to Kubernetes') {
       steps {
-        sh "kubectl apply -f k8s/deployment.yaml"
-        sh "kubectl apply -f k8s/service.yaml"
+        script {
+          def k8sStatus = sh(script: "kubectl apply -f k8s/deployment.yaml && kubectl apply -f k8s/service.yaml", returnStatus: true)
+          if (k8sStatus == 0) {
+            echo "✅ App successfully deployed through Kubernetes!"
+          } else {
+            error("❌ App deployment through Kubernetes failed!")
+          }
+        }
       }
     }
 
     stage('Deploy to VM via Ansible') {
       steps {
         dir("${ANSIBLE_DIR}") {
-          // sh "ansible-playbook -i inventory.ini deploy_flask.yml"
-          sh "ansible-playbook -i inventory_aws.ini deploy_flask.yml"
+          sshagent(['aws-ec2-key']) {
+            script {
+              def ansibleStatus = sh(script: "ansible-playbook -i inventory_aws.ini deploy_flask.yml", returnStatus: true)
+              if (ansibleStatus == 0) {
+                echo "✅ App deployed successfully to AWS EC2 via Ansible!"
+              } else {
+                error("❌ App deployment to AWS EC2 via Ansible failed!")
+              }
+            }
+          }
         }
       }
     }
-
   }
 
   post {
     success {
-      echo "✅ Build, K8s, and Ansible deployments completed successfully!"
+      echo "✅ Pipeline completed successfully — all deployments passed!"
     }
     failure {
-      echo "❌ Something went wrong during the pipeline."
+      echo "❌ Something went wrong during the pipeline execution!"
     }
   }
 }
