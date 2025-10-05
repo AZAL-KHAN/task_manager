@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  task-manager:
+    build: .
+    image: khanazal/python-task-manager:01
+    container_name: task-manager-container
+    ports:
+      - "5000:5000"

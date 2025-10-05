@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow p-4">
+    <h3 class="text-center text-primary mb-4">My Task List</h3>
+
+    <!-- Add new task -->
+    <form action="{{ url_for('add') }}" method="POST" class="d-flex mb-4">
+        <input type="text" name="task" class="form-control me-2" placeholder="Enter new task..." required>
+        <button class="btn btn-success">Add</button>
+    </form>
+
+    <!-- Task Table -->
+    {% if tasks %}
+    <ul class="list-group">
+        {% for task in tasks %}
+        <li class="list-group-item d-flex justify-content-between align-items-center {% if task.done %}completed{% endif %}">
+            <span>{{ loop.index }}. {{ task.name }}</span>
+            <div>
+                {% if not task.done %}
+                <a href="{{ url_for('complete', task_id=loop.index0) }}" class="btn btn-sm btn-outline-primary me-2">✔️ Done</a>
+                {% endif %}
+                <a href="{{ url_for('delete', task_id=loop.index0) }}" class="btn btn-sm btn-outline-danger">🗑️ Delete</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-center text-muted mt-3">No tasks yet. Add one above!</p>
+    {% endif %}
+</div>
+{% endblock %}
