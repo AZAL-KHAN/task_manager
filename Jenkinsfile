@@ -12,7 +12,7 @@ pipeline {
         stage("Checkout Code") {
             steps {
                 echo "Pulling code from GitHub..."
-                git branch: 'main', url: 'https://github.com/AZAL-KHAN/test_project.git'
+                git branch: 'main', url: 'https://github.com/AZAL-KHAN/task_manager.git'
             }
         }
 
