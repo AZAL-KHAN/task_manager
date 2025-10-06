@@ -29,7 +29,7 @@ pipeline {
                     sh """
                         docker run -d --rm --name ${CONTAINER_NAME} -p 5000:5000 ${DOCKER_REPO}/${IMAGE}
                         sleep 5
-                        if docker inspect -f "{{.State.Running}}" ${CONTAINER_NAME} | grep true; then
+                        if docker inspect -f '{{.State.Running}}' ${CONTAINER_NAME} | grep true; then
                             echo "✅ Container is running successfully."
                         else
                             echo "❌ Container failed to start."
@@ -60,11 +60,17 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    def k8sStatus = sh(script: "kubectl set image deployment/task-manager-deployment task-manager=${DOCKER_REPO}/${IMAGE} && kubectl apply -f k8s/service.yaml", returnStatus: true)
+                    // Apply deployment & service manifests, then update image
+                    def k8sStatus = sh(script: """
+                        kubectl apply -f k8s/deployment.yaml && \
+                        kubectl apply -f k8s/service.yaml && \
+                        kubectl set image deployment/task-manager-deployment task-manager=${DOCKER_REPO}/${IMAGE}
+                    """, returnStatus: true)
+
                     if (k8sStatus == 0) {
                         echo "✅ App successfully deployed to Kubernetes!"
                     } else {
-                        error("❌ App deployment to Kubernetes failed!")
+                        error("❌ Kubernetes deployment failed!")
                     }
                 }
             }
