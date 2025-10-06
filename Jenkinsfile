@@ -70,7 +70,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to VM via Ansible') {
+        stage('Ansible EC2 Deployment') {
             steps {
                 dir("${ANSIBLE_DIR}") {
                     sshagent(['aws-ec2-key']) {
