@@ -60,13 +60,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Apply deployment & service manifests, then update image
-                    def k8sStatus = sh(script: """
-                        kubectl apply -f k8s/deployment.yaml && \
-                        kubectl apply -f k8s/service.yaml && \
-                        kubectl set image deployment/task-manager-deployment task-manager=${DOCKER_REPO}/${IMAGE}
-                    """, returnStatus: true)
-
+                    def k8sStatus = sh(script: "kubectl apply -f k8s/", returnStatus: true)
+                    
                     if (k8sStatus == 0) {
                         echo "✅ App successfully deployed to Kubernetes!"
                     } else {
@@ -82,6 +77,7 @@ pipeline {
                     sshagent(['aws-ec2-key']) {
                         script {
                             def ansibleStatus = sh(script: "ansible-playbook -i inventory_aws.ini deploy_flask.yml", returnStatus: true)
+                            
                             if (ansibleStatus == 0) {
                                 echo "✅ App deployed to AWS EC2 successfully!"
                             } else {
