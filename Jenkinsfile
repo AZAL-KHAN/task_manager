@@ -19,7 +19,7 @@ pipeline {
 
         stage("Build Docker Image") {
             steps {
-                sh "docker build -t ${DOCKER_REPO}/${IMAGE}:latest ."
+                sh "docker build -t ${DOCKER_REPO}/${IMAGE} ."
             }
         }
 
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        docker run -d --rm --name ${CONTAINER_NAME} -p 5000:5000 ${DOCKER_REPO}/${IMAGE}:latest
+                        docker run -d --rm --name ${CONTAINER_NAME} -p 5000:5000 ${DOCKER_REPO}/${IMAGE}
                         sleep 5
                         if docker inspect -f "{{.State.Running}}" ${CONTAINER_NAME} | grep true; then
                             echo "✅ Container is running successfully."
@@ -51,7 +51,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh """
                         docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
-                        docker push ${DOCKER_REPO}/${IMAGE}:latest
+                        docker push ${DOCKER_REPO}/${IMAGE}
                     """
                 }
             }
@@ -60,7 +60,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    def k8sStatus = sh(script: "kubectl set image deployment/task-manager-deployment task-manager=${DOCKER_REPO}/${IMAGE}:latest && kubectl apply -f k8s/service.yaml", returnStatus: true)
+                    def k8sStatus = sh(script: "kubectl set image deployment/task-manager-deployment task-manager=${DOCKER_REPO}/${IMAGE} && kubectl apply -f k8s/service.yaml", returnStatus: true)
                     if (k8sStatus == 0) {
                         echo "✅ App successfully deployed to Kubernetes!"
                     } else {
