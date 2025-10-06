@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: task-manager
-          image: khanazal/python-task-manager:01
+          image: khanazal/task-tracker:01
           ports:
             - containerPort: 5000
